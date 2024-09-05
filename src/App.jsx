@@ -3,14 +3,18 @@ import LectureCard from './components/LectureCard';
 import Modal from './components/Modal';
 import Cookies from 'js-cookie';
 import Nav from './components/Nav';
+import { io } from 'socket.io-client';
 
 const App = () => {
   const [lectures, setLectures] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch lectures when the component mounts
+  // Initialize socket.io connection
+  const socket = io('http://localhost:5174');
+
   useEffect(() => {
-    fetch('http://localhost:5173/api/lectures')
+    // Fetch lectures when the component mounts
+    fetch('/api/lectures')
       .then((res) => {
         if (!res.ok) {
           throw new Error(`Error: ${res.status}`);
@@ -19,6 +23,16 @@ const App = () => {
       })
       .then((data) => setLectures(data))
       .catch((error) => console.error('Failed to fetch lectures:', error));
+
+    // Listen for new lecture events from the server
+    socket.on('new-lecture', (lecture) => {
+      setLectures((prevLectures) => [...prevLectures, lecture]);
+    });
+
+    // Clean up the socket connection when the component unmounts
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   // Handle adding a new lecture
@@ -26,7 +40,7 @@ const App = () => {
     // Optimistically update the UI
     setLectures([...lectures, lecture]);
 
-    // Send the lecture to the server
+    // Send the lecture to the server via REST API
     fetch('/api/lectures', {
       method: 'POST',
       headers: {
@@ -40,9 +54,11 @@ const App = () => {
         }
         return res.json();
       })
-      .then(() => {
+      .then((newLecture) => {
+        // Emit the new lecture event through Socket.io
+        socket.emit('new-lecture', newLecture);
         // Set a cookie with the last added lecture
-        Cookies.set('lastLecture', JSON.stringify(lecture), { expires: 1 });
+        Cookies.set('lastLecture', JSON.stringify(newLecture), { expires: 1 });
       })
       .catch((error) => {
         console.error('Failed to add lecture:', error);

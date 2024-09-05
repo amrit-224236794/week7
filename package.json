@@ -12,11 +12,16 @@
   },
   "dependencies": {
     "chai": "^5.1.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
     "js-cookie": "^3.0.5",
     "mocha": "^10.7.3",
+    "mongoose": "^8.6.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
